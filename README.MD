@@ -50,4 +50,4 @@ _Tasks_
 - `?tasks` - Gets a list of all the tasks under the current sprint, and shows whether they are in progress or if they are finished.
 
 **Code**
-- The code can be found at https://github.itu.dk/aneg/ScrumBot, feel free to add any features.
+- The code can be found at https://github.com/adamnegaard/ScrumBot, feel free to add any features.
