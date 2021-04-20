@@ -52,17 +52,6 @@ namespace ScrumBot.ClientHandler
                 var deltaTime = (eventDateStart - now).Value.TotalMinutes;
                 if (15 >= deltaTime && deltaTime > 0.0)
                 {
-                    var channel = discordGuild.Channels.FirstOrDefault(c => c.Key == Constants.ReminderChannelId).Value;
-                    if (channel == null)
-                    {
-                        Console.Error.WriteLine("Could not find the reminder channel");
-                        continue;
-                    }
-
-                    var foxtrotRole =
-                        discordGuild.Roles.Values.FirstOrDefault(r => r.Name.ToLower().Contains("foxtrot"));
-
-
                     var isReminded =
                         await _reminderRepository.IsReminded(eventDateStart.Value, discordGuild.Id, evt.Summary);
                     if (isReminded.status == Status.Found || isReminded.reminded) continue;
@@ -74,13 +63,20 @@ namespace ScrumBot.ClientHandler
                         Summary = evt.Summary,
                         Reminded = true
                     };
+                    
+                    var channel = discordGuild.Channels.FirstOrDefault(c => c.Key == Constants.ReminderChannelId).Value;
+                    if (channel == null)
+                    {
+                        Console.Error.WriteLine("Could not find the reminder channel");
+                        continue;
+                    }
 
+                    var foxtrotRole =
+                        discordGuild.Roles.Values.FirstOrDefault(r => r.Name.ToLower().Contains("foxtrot"));
+                    
                     await _reminderRepository.Create(reminder);
 
-                    var messageText = (foxtrotRole != null
-                                      ? foxtrotRole.Mention
-                                      : "@here") +
-                                  $" *{evt.Summary}* is today from {eventDateStart:HH:mm} - {eventDateEnd:HH:mm}. Remember to start your [time tracking](https://clockify.me/tracker).";
+                    var messageText = $" **{evt.Summary}** is today from {eventDateStart:HH:mm} - {eventDateEnd:HH:mm}. Remember to start your [time tracking](https://clockify.me/tracker).";
                     
                     var reminderEmbed = new DiscordEmbedBuilder
                     {
@@ -89,7 +85,13 @@ namespace ScrumBot.ClientHandler
                         Timestamp = DateTimeOffset.Now,
                         Color = DiscordColor.Aquamarine
                     };
-                    var message = await channel.SendMessageAsync(embed: reminderEmbed);
+                    
+                    var messageBuilder = new DiscordMessageBuilder
+                    {
+                        Content    = foxtrotRole != null ? foxtrotRole.Mention : "@here",
+                        Embed = reminderEmbed
+                    };
+                    var message = await channel.SendMessageAsync(messageBuilder);
                     await message.CreateReactionAsync(DiscordEmoji.FromName(client, ":gift:"));
                 }
             }
